@@ -4,7 +4,7 @@ aws:
   region: us-east-1
 
 lightsail:
-  instance_name: instagram-clone-app
+  instance_name: instagram-clone-app-new-1
   static_ip: ""
   
   # Instance size configuration (optional)
