@@ -144,6 +144,7 @@ deployment:
       health_check: true
       external_connectivity: true
       endpoints_to_test:
+        - "/"
         - "/api/posts"
       port: 3000  # Node.js applications run on port 3000
 
@@ -170,8 +171,8 @@ github_actions:
 
 monitoring:
   health_check:
-    endpoint: "/api/posts"
-    expected_content: "["
+    endpoint: "/"
+    expected_content: "Instagram"
     port: 3000  # Node.js applications run on port 3000
     max_attempts: 15
     wait_between_attempts: 20

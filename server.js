@@ -9,14 +9,14 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
 // Configure AWS S3
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
+  region: process.env.AWS_REGION || 'us-east-1',
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -36,7 +36,7 @@ const upload = multer({
 });
 
 // Simple JSON file database
-const DB_FILE = 'posts.json';
+const DB_FILE = path.join(__dirname, 'posts.json');
 
 const readPosts = () => {
   try {
@@ -51,7 +51,7 @@ const writePosts = (posts) => {
   fs.writeFileSync(DB_FILE, JSON.stringify(posts, null, 2));
 };
 
-// Routes
+// API Routes
 app.get('/api/posts', (req, res) => {
   const posts = readPosts();
   res.json(posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
@@ -68,7 +68,7 @@ app.post('/api/posts', upload.single('image'), (req, res) => {
     id: uuidv4(),
     username: username || 'Anonymous',
     caption: caption || '',
-    imageUrl: req.file.location, // S3 URL
+    imageUrl: req.file.location,
     likes: 0,
     createdAt: new Date().toISOString()
   };
@@ -94,6 +94,23 @@ app.post('/api/posts/:id/like', (req, res) => {
   res.json(post);
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Serve React frontend in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from React build
+  app.use(express.static(path.join(__dirname, 'client/build')));
+  
+  // Handle React routing - return index.html for any non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  });
+}
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Instagram Clone server running on port ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
